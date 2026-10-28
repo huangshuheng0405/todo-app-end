@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: todo
+  datasource:
+    # createDatabaseIfNotExist=true:连上 MySQL 后自动建 todo 库
+    # allowPublicKeyRetrieval=true:MySQL 8/9 默认认证插件在非 SSL 连接下需要它
+    # DB_HOST/DB_NAME/DB_USERNAME/DB_PASSWORD 可用环境变量覆盖(docker-compose 里注入),
+    # 默认 localhost 保证本机 mvn spring-boot:run 不用配任何环境变量
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:todo}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    # 本地开发直接写密码即可;也可通过环境变量 MYSQL_PASSWORD/DB_PASSWORD 覆盖
+    password: ${DB_PASSWORD:${MYSQL_PASSWORD:123456}}
+  jpa:
+    hibernate:
+      # 启动时根据实体自动建表/补列,学习阶段最省心
+      ddl-auto: update
+    open-in-view: false
+
+server:
+  port: 8089
+
+app:
+  # token 有效期(天),过期后需要重新登录
+  token-ttl-days: 30

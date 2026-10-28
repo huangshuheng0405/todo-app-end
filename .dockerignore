@@ -1,0 +1,7 @@
+# 构建镜像时用不到的文件,剔除可以加快 docker build 的上下文传输
+target/
+.idea/
+*.iml
+.git/
+.gitignore
+*.md

@@ -1,0 +1,48 @@
+# 待办后端一键部署:MySQL + Spring Boot 一起起
+# 用法(项目根目录,即本文件所在目录):
+#   首次/改了代码:docker compose up -d --build
+#   日常启动:    docker compose up -d
+#   查看日志:    docker compose logs -f app
+#   停止:        docker compose down(加 -v 连数据一起删,慎用)
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: todo-mysql
+    restart: unless-stopped
+    environment:
+      # 服务器上务必改成强密码:在本文件旁建 .env 写 MYSQL_PASSWORD=你的密码,
+      # 或在启动前 export MYSQL_PASSWORD=你的密码
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-123456}
+      MYSQL_DATABASE: todo
+      TZ: Asia/Shanghai
+    volumes:
+      # 数据落盘到命名卷,容器重建/升级数据不丢
+      - mysql_data:/var/lib/mysql
+    # 健康检查:App 必须等 MySQL 真正能连了再启动,否则启动顺序靠运气
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD}
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # 注意:3306 不映射到宿主机,只有 app 容器能通过内部网络访问,更安全
+
+  app:
+    build: .
+    container_name: todo-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 容器网络里服务名就是主机名,mysql 指上面那个容器
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_PASSWORD:-123456}
+      TZ: Asia/Shanghai
+    ports:
+      - "8089:8089"
+
+volumes:
+  mysql_data:
